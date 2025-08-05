@@ -14,18 +14,22 @@ interface FeedbackFormProps {
     onCancel: () => void;
 }
 
+/**
+ * FeedbackForm component allows users to provide feedback on an improved error message.
+ * It includes questions about the comprehensibility, correctness, and helpfulness of the error message.
+ */
 const feedbackQuestions = [
     {
         id: 'comprehensible',
-        question: 'Is the error message comprehensible?'
+        question: 'Is the error message easy to understand?'
     },
     {
         id: 'correct',
-        question: 'Is the error message correct in its explanation?'
+        question: 'Does the error message accurately explain the problem?'
     },
     {
         id: 'improvement',
-        question: 'Is the error message an improvement over the standard one?'
+        question: 'Is this error message better than the standard one?'
     },
     {
         id: 'hasHint',
@@ -33,7 +37,11 @@ const feedbackQuestions = [
     },
     {
         id: 'hintCorrect',
-        question: 'Is the error message hint actually correct?'
+        question: 'Is the suggested fix in the error message correct?'
+    },
+    {
+        id: 'adheresToGuidelines',
+        question: 'Does the error message follow the prompt\'s guidelines?'
     }
 ];
 
@@ -50,9 +58,9 @@ export function FeedbackForm({snippetName, errorType, model, onSubmit, onCancel}
     const isComplete = feedbackQuestions.every(q => answers[q.id]);
 
     return (
-        <div className="flex-1 bg-panel p-6 overflow-auto">
-            <Card className="max-w-2xl mx-auto bg-card">
-                <CardHeader>
+        <div className="h-full w-full flex bg-panel p-0">
+            <Card className="max-w-2xl w-full h-full bg-card flex flex-col mx-auto">
+                <CardHeader className="shrink-0">
                     <CardTitle className="text-xl font-semibold">
                         Feedback Form
                     </CardTitle>
@@ -63,7 +71,7 @@ export function FeedbackForm({snippetName, errorType, model, onSubmit, onCancel}
                     </div>
                 </CardHeader>
 
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-6 flex-1 overflow-y-auto min-h-0">
                     <p className="text-sm text-muted-foreground">
                         Please evaluate the improved error message by answering the following questions:
                     </p>

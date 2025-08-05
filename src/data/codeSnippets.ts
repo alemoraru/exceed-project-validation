@@ -7,7 +7,7 @@ export interface CodeSnippet {
 
 export const codeSnippets: CodeSnippet[] = [
     {
-        id: "snippet-1",
+        id: "snippetA",
         name: "list_index.py",
         code: `def get_item(items, index):
     return items[index]
@@ -23,7 +23,7 @@ print(result)`,
 IndexError: list index out of range`
     },
     {
-        id: "snippet-2",
+        id: "snippetB",
         name: "division_zero.py",
         code: `def calculate_average(numbers):
     total = sum(numbers)
@@ -41,7 +41,7 @@ print(f"Average: {average}")`,
 ZeroDivisionError: division by zero`
     },
     {
-        id: "snippet-3",
+        id: "snippetC",
         name: "key_error.py",
         code: `user_data = {
     "name": "Alice",
@@ -62,7 +62,7 @@ print(f"Phone: {phone}")`,
 KeyError: 'phone'`
     },
     {
-        id: "snippet-4",
+        id: "snippetD",
         name: "type_error.py",
         code: `def concatenate_strings(str1, str2):
     return str1 + str2
@@ -81,11 +81,10 @@ TypeError: can only concatenate str (not "int") to str`
 ];
 
 export const ollamaModels = [
-    "llama3.2:latest",
-    "codellama:latest",
-    "mistral:latest",
-    "phi3:latest",
-    "qwen2:latest"
+    "deepseek-coder:6.7b",
+    "llama3.2:3b",
+    "llama3.1:8b",
+    "codellama:7b"
 ];
 
 export type ErrorMessageType = "pragmatic" | "contingent";
