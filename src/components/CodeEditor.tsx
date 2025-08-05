@@ -18,11 +18,14 @@ import {
     Sparkles,
     MessageSquare,
     X,
-    Loader2
+    Loader2, Download
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import {codeSnippets, ollamaModels, errorMessageTypes, type ErrorMessageType} from '@/data/codeSnippets';
 import {FeedbackForm} from './FeedbackForm';
+import ollama from 'ollama';
+import {promptTemplates, systemPrompts} from '@/lib/promptTemplates';
+import {toast} from '@/hooks/use-toast';
 
 interface ImprovedError {
     snippetId: string;
@@ -40,6 +43,7 @@ export function CodeEditor() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [feedbackGiven, setFeedbackGiven] = useState<Set<string>>(new Set());
     const [showFeedbackTab, setShowFeedbackTab] = useState(false);
+    const [activeErrorTab, setActiveErrorTab] = useState<'standard' | 'improved'>('standard');
 
     const activeSnippet = codeSnippets.find(s => s.id === activeTab)!;
     const currentImprovedError = improvedErrors.find(
@@ -57,76 +61,124 @@ export function CodeEditor() {
 
         setIsGenerating(true);
         try {
-            // Simulate API call to Ollama
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Format the prompt using the template
+            const promptTemplate = promptTemplates[errorMessageType];
+            const formattedPrompt = promptTemplate
+                .replace('{{code}}', activeSnippet.code)
+                .replace('{{error}}', activeSnippet.standardError);
 
-            const mockImprovedError: ImprovedError = {
+            const systemPrompt = systemPrompts[selectedModel];
+
+            // Call Ollama API using the selected model
+            const response = await ollama.generate({
+                model: selectedModel,
+                system: systemPrompt,
+                prompt: formattedPrompt,
+                options: {
+                    temperature: 0.0
+                }
+            });
+
+            // Create a new ImprovedError object
+            const improvedError: ImprovedError = {
                 snippetId: activeTab,
-                content: `## ${errorMessageType === 'pragmatic' ? 'Pragmatic' : 'Contingent'} Error Analysis
-
-**Error Type:** \`IndexError\`
-
-**What went wrong:** Your code tried to access item #5 in a list that only has 3 items (positions 0, 1, and 2).
-
-**Why this happened:** Lists in Python start counting from 0, so a list with 3 items has valid positions 0, 1, and 2. Position 5 doesn't exist.
-
-**How to fix it:**
-\`\`\`python
-# Option 1: Check if index is valid
-def get_item(items, index):
-    if index < len(items):
-        return items[index]
-    else:
-        return None  # or handle the error appropriately
-
-# Option 2: Use try-except
-def get_item(items, index):
-    try:
-        return items[index]
-    except IndexError:
-        return None  # or a default value
-\`\`\`
-
-**Prevention tip:** Always check that your index is less than \`len(your_list)\` before accessing list items.`,
+                content: response.response,
                 type: errorMessageType,
-                model: selectedModel
+                model: selectedModel,
             };
 
-            setImprovedErrors(prev => {
-                const filtered = prev.filter(e =>
-                    !(e.snippetId === activeTab && e.type === errorMessageType && e.model === selectedModel)
-                );
-                return [...filtered, mockImprovedError];
-            });
-
-            // Remove feedback status for this error combination
-            const errorKey = getErrorKey(activeTab, errorMessageType, selectedModel);
-            setFeedbackGiven(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(errorKey);
-                return newSet;
-            });
-
-        } catch (error) {
-            console.error('Error generating improved message:', error);
+            setImprovedErrors(prev => [...prev.filter(e => getErrorKey(e.snippetId, e.type, e.model) !== getErrorKey(activeTab, errorMessageType, selectedModel)), improvedError]);
+            setShowErrorPanel(true); // Open the error panel
+            setActiveErrorTab('improved'); // Switch to improved error tab
+        } catch (err) {
+            // Optionally handle error
         } finally {
             setIsGenerating(false);
         }
-    }, [activeTab, errorMessageType, selectedModel, canGenerateError]);
+    }, [activeTab, errorMessageType, selectedModel, canGenerateError, activeSnippet]);
 
+    // Utility to store feedback in localStorage
+    function storeFeedbackLocally(feedback: Record<string, string>) {
+        const key = 'codeEditorFeedback';
+        const existing = localStorage.getItem(key);
+        const arr = existing ? JSON.parse(existing) : [];
+        arr.push(feedback);
+        localStorage.setItem(key, JSON.stringify(arr));
+    }
+
+    // Utility to download feedback as CSV
+    function downloadFeedbackCSV() {
+        const key = 'codeEditorFeedback';
+        const existing = localStorage.getItem(key);
+        if (!existing) return;
+        const arr = JSON.parse(existing);
+        if (!arr.length) return;
+        const headers = Object.keys(arr[0]);
+        const csvRows = [headers.join(",")].concat(
+            arr.map(row => headers.map(h => JSON.stringify(row[h] ?? "")).join(","))
+        );
+        const csv = csvRows.join("\n");
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'feedback.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // Handle feedback submission
     const handleFeedbackSubmit = useCallback((answers: Record<string, boolean>) => {
         const errorKey = getErrorKey(activeTab, errorMessageType, selectedModel);
         setFeedbackGiven(prev => new Set([...prev, errorKey]));
         setShowFeedbackTab(false);
 
-        // Here you would typically send the feedback to your backend
-        console.log('Feedback submitted:', {
+        // Flatten answers into top-level properties for easier CSV parsing
+        const feedback: Record<string, string> = {
             snippetId: activeTab,
             errorType: errorMessageType,
             model: selectedModel,
-            answers
-        });
+            timestamp: new Date().toISOString(),
+            ...answers // Each answer key becomes a column
+        };
+        try {
+            storeFeedbackLocally(feedback);
+            toast({
+                title: 'Feedback submitted',
+                description: 'Thank you for your feedback!',
+                variant: 'success',
+            });
+        } catch (err) {
+            toast({
+                title: 'Feedback error',
+                description: 'Failed to submit feedback. Please try again.',
+                variant: 'destructive',
+            });
+        }
+        // Here you would typically send the feedback to your backend
+        console.log('Feedback submitted:', feedback);
     }, [activeTab, errorMessageType, selectedModel]);
+
+    // Handle tab change and manage error panel visibility
+    function handleTabChange(snippetId: string) {
+        setActiveTab(snippetId);
+        // Only close the error panel if we were viewing the improved error tab and the new snippet does not have an improved error
+        const prevHasImprovedError = improvedErrors.some(e => e.snippetId === activeTab && e.type === errorMessageType && e.model === selectedModel);
+        const newHasImprovedError = improvedErrors.some(e => e.snippetId === snippetId && e.type === errorMessageType && e.model === selectedModel);
+        const isOnImprovedTab = currentImprovedError !== undefined;
+        if (isOnImprovedTab && prevHasImprovedError && !newHasImprovedError) {
+            setShowErrorPanel(false);
+        }
+    }
+
+    const handleErrorMessageTypeChange = (type: ErrorMessageType) => {
+        setErrorMessageType(type);
+        // Check if the new error type has an improved error for the current tab and model
+        const hasImprovedError = improvedErrors.some(e => e.snippetId === activeTab && e.type === type && e.model === selectedModel);
+        if (!hasImprovedError) {
+            setShowErrorPanel(false); // Close the entire panel if no improved error for the selected type
+        }
+    };
 
     return (
         <div className="flex flex-col h-screen bg-background">
@@ -135,7 +187,7 @@ def get_item(items, index):
                 {codeSnippets.map((snippet) => (
                     <button
                         key={snippet.id}
-                        onClick={() => setActiveTab(snippet.id)}
+                        onClick={() => handleTabChange(snippet.id)}
                         className={`px-4 py-2 text-sm font-medium border-r border-tab-border transition-colors ${
                             activeTab === snippet.id
                                 ? 'bg-tab-active text-foreground'
@@ -178,7 +230,7 @@ def get_item(items, index):
                         {/* Error Panel */}
                         {showErrorPanel && (
                             <Card className="bg-panel border-t border-border shadow-panel">
-                                <Tabs defaultValue="standard" className="p-4">
+                                <Tabs value={activeErrorTab} onValueChange={setActiveErrorTab} className="p-4">
                                     <div className="flex items-center justify-between mb-4">
                                         <TabsList className="bg-muted">
                                             <TabsTrigger value="standard">Standard Error</TabsTrigger>
@@ -196,10 +248,10 @@ def get_item(items, index):
                                     </div>
 
                                     <TabsContent value="standard" className="mt-4">
-                    <pre
-                        className="bg-error text-destructive-foreground p-4 rounded-md border border-error-border text-sm font-mono whitespace-pre-wrap">
-                      {activeSnippet.standardError}
-                    </pre>
+                                        <pre
+                                            className="bg-error text-destructive-foreground p-4 rounded-md border border-error-border text-sm font-mono whitespace-pre-wrap">
+                                          {activeSnippet.standardError}
+                                        </pre>
                                     </TabsContent>
 
                                     {currentImprovedError && (
@@ -237,7 +289,7 @@ def get_item(items, index):
                                 {/* Error Panel */}
                                 {showErrorPanel && (
                                     <Card className="bg-panel border-t border-border shadow-panel">
-                                        <Tabs defaultValue="standard" className="p-4">
+                                        <Tabs value={activeErrorTab} onValueChange={setActiveErrorTab} className="p-4">
                                             <div className="flex items-center justify-between mb-4">
                                                 <TabsList className="bg-muted">
                                                     <TabsTrigger value="standard">Standard Error</TabsTrigger>
@@ -255,10 +307,10 @@ def get_item(items, index):
                                             </div>
 
                                             <TabsContent value="standard" className="mt-4">
-                        <pre
-                            className="bg-error text-destructive-foreground p-4 rounded-md border border-error-border text-sm font-mono whitespace-pre-wrap">
-                          {activeSnippet.standardError}
-                        </pre>
+                                                <pre
+                                                    className="bg-error text-destructive-foreground p-4 rounded-md border border-error-border text-sm font-mono whitespace-pre-wrap">
+                                                    {activeSnippet.standardError}
+                                                </pre>
                                             </TabsContent>
 
                                             {currentImprovedError && (
@@ -293,82 +345,100 @@ def get_item(items, index):
 
                 {/* Bottom Toolbar */}
                 <div className="flex items-center gap-4 p-4 bg-toolbar border-t border-border">
-                    <Button
-                        variant={showErrorPanel ? "secondary" : "outline"}
-                        size="sm"
-                        onClick={() => setShowErrorPanel(!showErrorPanel)}
-                        className="flex items-center gap-2"
-                    >
-                        <Terminal className="w-4 h-4"/>
-                        {showErrorPanel ? 'Hide' : 'Show'} Error
-                    </Button>
+                    {/* Left-side buttons */}
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant={showErrorPanel ? "secondary" : "outline"}
+                            size="sm"
+                            onClick={() => setShowErrorPanel(!showErrorPanel)}
+                            className="flex items-center gap-2"
+                        >
+                            <Terminal className="w-4 h-4"/>
+                            {showErrorPanel ? 'Hide' : 'Show'} Error
+                        </Button>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="flex items-center gap-2">
-                                Type: {errorMessageType}
-                                <ChevronDown className="w-4 h-4"/>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-popover">
-                            {errorMessageTypes.map((type) => (
-                                <DropdownMenuItem
-                                    key={type}
-                                    onClick={() => setErrorMessageType(type)}
-                                    className="capitalize"
-                                >
-                                    {type}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                    Type: {errorMessageType}
+                                    <ChevronDown className="w-4 h-4"/>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="bg-popover">
+                                {errorMessageTypes.map((type) => (
+                                    <DropdownMenuItem
+                                        key={type}
+                                        onClick={() => handleErrorMessageTypeChange(type)}
+                                        className="capitalize"
+                                    >
+                                        {type}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="flex items-center gap-2">
-                                Model: {selectedModel}
-                                <ChevronDown className="w-4 h-4"/>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-popover">
-                            {ollamaModels.map((model) => (
-                                <DropdownMenuItem
-                                    key={model}
-                                    onClick={() => setSelectedModel(model)}
-                                >
-                                    {model}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                    Model: {selectedModel}
+                                    <ChevronDown className="w-4 h-4"/>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="bg-popover">
+                                {ollamaModels.map((model) => (
+                                    <DropdownMenuItem
+                                        key={model}
+                                        onClick={() => {
+                                            setSelectedModel(model);
+                                            setShowErrorPanel(false); // Close error panel when model changes
+                                        }}
+                                    >
+                                        {model}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
-                    <Button
-                        variant="default"
-                        size="sm"
-                        onClick={generateImprovedError}
-                        disabled={!canGenerateError}
-                        className="flex items-center gap-2 bg-gradient-primary"
-                    >
-                        {isGenerating ? (
-                            <Loader2 className="w-4 h-4 animate-spin"/>
-                        ) : (
-                            <Sparkles className="w-4 h-4"/>
-                        )}
-                        {isGenerating ? 'Generating...' : 'Improve Error'}
-                    </Button>
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={generateImprovedError}
+                            disabled={!canGenerateError}
+                            className="flex items-center gap-2 bg-gradient-primary"
+                        >
+                            {isGenerating ? (
+                                <Loader2 className="w-4 h-4 animate-spin"/>
+                            ) : (
+                                <Sparkles className="w-4 h-4"/>
+                            )}
+                            {isGenerating ? 'Generating...' : 'Improve Error'}
+                        </Button>
 
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setShowFeedbackTab(true);
+                                setShowErrorPanel(true); // Ensure error panel is visible for comparison
+                            }}
+                            disabled={!currentImprovedError || feedbackGiven.has(getErrorKey(activeTab, errorMessageType, selectedModel))}
+                            className="flex items-center gap-2"
+                        >
+                            <MessageSquare className="w-4 h-4"/>
+                            Feedback
+                        </Button>
+                    </div>
+                    {/* Spacer */}
+                    <div className="flex-1"/>
+                    {/* Right-side download button */}
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                            setShowFeedbackTab(true);
-                            setShowErrorPanel(true); // Ensure error panel is visible for comparison
-                        }}
-                        disabled={!currentImprovedError || feedbackGiven.has(getErrorKey(activeTab, errorMessageType, selectedModel))}
-                        className="flex items-center gap-2"
+                        onClick={downloadFeedbackCSV}
+                        className="flex items-center gap-2 ml-auto"
                     >
-                        <MessageSquare className="w-4 h-4"/>
-                        Feedback
+                        <Download className="w-4 h-4"/>
+                        Download Feedback CSV
                     </Button>
                 </div>
             </div>
