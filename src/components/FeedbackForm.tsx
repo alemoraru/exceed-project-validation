@@ -66,16 +66,19 @@ export function FeedbackForm({snippetName, errorType, model, onSubmit, onCancel}
                     </CardTitle>
                     <div className="text-sm text-muted-foreground space-y-1">
                         <div>File: <span className="font-mono">{snippetName}</span></div>
-                        <div>Error Type: <span className="capitalize font-medium">{errorType}</span></div>
-                        <div>Model: <span className="font-mono">{model}</span></div>
+                        <div>Error Message Style: <span className="capitalize font-medium">{errorType}</span></div>
+                        <div>Model Used: <span className="font-mono">{model}</span></div>
                     </div>
-                </CardHeader>
 
-                <CardContent className="space-y-6 flex-1 overflow-y-auto min-h-0">
+                    {/* Horizontal separator */}
+                    <div className="border-t border-border my-4"/>
                     <p className="text-sm text-muted-foreground">
                         Please evaluate the improved error message by answering the following questions:
                     </p>
+                </CardHeader>
 
+                <CardContent className="space-y-6 flex-1 overflow-y-auto min-h-0">
+                    {/* Feedback Questions */}
                     {feedbackQuestions.map((question) => (
                         <div key={question.id} className="space-y-3">
                             <Label className="text-base font-medium">
