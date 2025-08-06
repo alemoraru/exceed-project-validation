@@ -43,7 +43,7 @@ export function CodeEditor() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [feedbackGiven, setFeedbackGiven] = useState<Set<string>>(new Set());
     const [showFeedbackTab, setShowFeedbackTab] = useState(false);
-    const [activeErrorTab, setActiveErrorTab] = useState<'standard' | 'improved'>('standard');
+    const [activeErrorTab, setActiveErrorTab] = useState<string>("standard");
 
     const activeSnippet = codeSnippets.find(s => s.id === activeTab)!;
     const currentImprovedError = improvedErrors.find(
@@ -136,6 +136,7 @@ export function CodeEditor() {
         // Flatten answers into top-level properties for easier CSV parsing
         const feedback: Record<string, string> = {
             snippetId: activeTab,
+            snippetName: activeSnippet.name,
             errorType: errorMessageType,
             model: selectedModel,
             timestamp: new Date().toISOString(),
@@ -155,7 +156,7 @@ export function CodeEditor() {
                 variant: 'destructive',
             });
         }
-        // Here you would typically send the feedback to your backend
+        // We just log the feedback here, no need for an API call in this example
         console.log('Feedback submitted:', feedback);
     }, [activeTab, errorMessageType, selectedModel]);
 
@@ -165,9 +166,10 @@ export function CodeEditor() {
         // Only close the error panel if we were viewing the improved error tab and the new snippet does not have an improved error
         const prevHasImprovedError = improvedErrors.some(e => e.snippetId === activeTab && e.type === errorMessageType && e.model === selectedModel);
         const newHasImprovedError = improvedErrors.some(e => e.snippetId === snippetId && e.type === errorMessageType && e.model === selectedModel);
-        const isOnImprovedTab = currentImprovedError !== undefined;
+        const isOnImprovedTab = activeErrorTab === 'improved';
         if (isOnImprovedTab && prevHasImprovedError && !newHasImprovedError) {
             setShowErrorPanel(false);
+            setActiveErrorTab('standard');
         }
     }
 
@@ -181,9 +183,9 @@ export function CodeEditor() {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-background">
+        <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-background">
             {/* Top Tabs */}
-            <div className="flex bg-toolbar border-b border-border">
+            <div className="flex bg-toolbar border-b border-border shrink-0">
                 {codeSnippets.map((snippet) => (
                     <button
                         key={snippet.id}
@@ -210,21 +212,23 @@ export function CodeEditor() {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-h-0 max-h-full overflow-hidden">
                 {!showFeedbackTab ? (
                     <>
                         {/* Code Editor */}
-                        <div className="flex-1 bg-editor">
-                            <CodeMirror
-                                value={activeSnippet.code}
-                                theme={oneDark}
-                                extensions={[python()]}
-                                editable={false}
-                                style={{
-                                    fontSize: '14px',
-                                    height: '100%'
-                                }}
-                            />
+                        <div className="flex-1 bg-editor min-h-0 max-h-full overflow-hidden">
+                            <div style={{maxHeight: '100%', height: '100%', overflowY: 'auto'}}>
+                                <CodeMirror
+                                    value={activeSnippet.code}
+                                    theme={oneDark}
+                                    extensions={[python()]}
+                                    editable={false}
+                                    style={{
+                                        fontSize: '14px',
+                                        height: '100%'
+                                    }}
+                                />
+                            </div>
                         </div>
 
                         {/* Error Panel */}
@@ -249,7 +253,7 @@ export function CodeEditor() {
 
                                     <TabsContent value="standard" className="mt-4">
                                         <pre
-                                            className="bg-error text-destructive-foreground p-4 rounded-md border border-error-border text-sm font-mono whitespace-pre-wrap">
+                                            className="bg-error text-destructive-foreground p-4 rounded-md border border-error-border text-sm font-mono whitespace-pre-wrap max-h-60 overflow-auto">
                                           {activeSnippet.standardError}
                                         </pre>
                                     </TabsContent>
@@ -257,7 +261,7 @@ export function CodeEditor() {
                                     {currentImprovedError && (
                                         <TabsContent value="improved" className="mt-4">
                                             <div
-                                                className="bg-success/10 text-foreground p-4 rounded-md border border-success/20 prose prose-sm prose-invert max-w-none">
+                                                className="bg-success/10 text-foreground p-4 rounded-md border border-success/20 prose prose-sm prose-invert max-w-none max-h-60 overflow-auto">
                                                 <ReactMarkdown>
                                                     {currentImprovedError.content}
                                                 </ReactMarkdown>
@@ -269,21 +273,23 @@ export function CodeEditor() {
                         )}
                     </>
                 ) : (
-                    <ResizablePanelGroup direction="horizontal" className="flex-1">
-                        <ResizablePanel defaultSize={60} minSize={30}>
-                            <div className="flex flex-col h-full">
+                    <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0 max-h-full overflow-hidden">
+                        <ResizablePanel defaultSize={60} minSize={30} className="min-h-0 max-h-full overflow-hidden">
+                            <div className="flex flex-col h-full min-h-0 max-h-full overflow-hidden">
                                 {/* Code Editor */}
-                                <div className="flex-1 bg-editor">
-                                    <CodeMirror
-                                        value={activeSnippet.code}
-                                        theme={oneDark}
-                                        extensions={[python()]}
-                                        editable={false}
-                                        style={{
-                                            fontSize: '14px',
-                                            height: '100%'
-                                        }}
-                                    />
+                                <div className="flex-1 bg-editor min-h-0 max-h-full overflow-hidden">
+                                    <div style={{maxHeight: '100%', height: '100%', overflowY: 'auto'}}>
+                                        <CodeMirror
+                                            value={activeSnippet.code}
+                                            theme={oneDark}
+                                            extensions={[python()]}
+                                            editable={false}
+                                            style={{
+                                                fontSize: '14px',
+                                                height: '100%'
+                                            }}
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Error Panel */}
@@ -308,7 +314,7 @@ export function CodeEditor() {
 
                                             <TabsContent value="standard" className="mt-4">
                                                 <pre
-                                                    className="bg-error text-destructive-foreground p-4 rounded-md border border-error-border text-sm font-mono whitespace-pre-wrap">
+                                                    className="bg-error text-destructive-foreground p-4 rounded-md border border-error-border text-sm font-mono whitespace-pre-wrap max-h-60 overflow-auto">
                                                     {activeSnippet.standardError}
                                                 </pre>
                                             </TabsContent>
@@ -316,7 +322,7 @@ export function CodeEditor() {
                                             {currentImprovedError && (
                                                 <TabsContent value="improved" className="mt-4">
                                                     <div
-                                                        className="bg-success/10 text-foreground p-4 rounded-md border border-success/20 prose prose-sm prose-invert max-w-none">
+                                                        className="bg-success/10 text-foreground p-4 rounded-md border border-success/20 prose prose-sm prose-invert max-w-none max-h-60 overflow-auto">
                                                         <ReactMarkdown>
                                                             {currentImprovedError.content}
                                                         </ReactMarkdown>
@@ -331,7 +337,7 @@ export function CodeEditor() {
 
                         <ResizableHandle withHandle/>
 
-                        <ResizablePanel defaultSize={40} minSize={30}>
+                        <ResizablePanel defaultSize={40} minSize={30} className="min-h-0 max-h-full overflow-hidden">
                             <FeedbackForm
                                 snippetName={activeSnippet.name}
                                 errorType={errorMessageType}
@@ -344,7 +350,7 @@ export function CodeEditor() {
                 )}
 
                 {/* Bottom Toolbar */}
-                <div className="flex items-center gap-4 p-4 bg-toolbar border-t border-border">
+                <div className="flex items-center gap-4 p-4 bg-toolbar border-t border-border shrink-0">
                     {/* Left-side buttons */}
                     <div className="flex items-center gap-4">
                         <Button

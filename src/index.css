@@ -76,3 +76,29 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Code Editor Dark Theme Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 12px;
+    background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 8px;
+    border: 2px solid hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--accent));
+}
+
+::-webkit-scrollbar-corner {
+    background: hsl(var(--background));
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
+}

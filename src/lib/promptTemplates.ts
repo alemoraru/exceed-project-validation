@@ -19,11 +19,11 @@ ERROR MESSAGE:
 ---
 TASK:
 
-1. Extract the exception type and line number from ERROR.
+1. Extract the exception type and line number from the ERROR message.
 2. Write exactly one paragraph (around 20-25 words or less) that:
     - Begins with "**<ExceptionType>** at **line <line>**:"
     - Briefly states the cause and hints at a fix.
-    - Focuses on providing helpful hints or suggestions, without directly giving the corrected code.
+    - Focuses on providing helpful actionable insights, without directly giving the corrected code.
 
 FORMAT:
 You may use markdown for emphasis, but do NOT include lists or code fences.
@@ -46,7 +46,7 @@ TypeError: can only concatenate str (not "int") to str on line 3
 OUTPUT:
 \`\`\`
 **TypeError** at **line 3**: You tried to concatenate a string and an integer, which is not allowed in Python.
-Consider bringing both variables to the same type before performing operations on them.
+Consider bringing both variables to the same type before performing operations on them, i.e. casting \`y\` to a string.
 \`\`\`
 ---
 
@@ -81,8 +81,8 @@ in Python, so the last element of any list is at index \`len(lst) - 1\`.
 
 NOW WRITE YOUR RESPONSE:`,
     contingent: `INSTRUCTION:
-INSTRUCTION:
-Guide the Python programmer to resolve their error in 3–5 supportive sentences. Focus on actionable steps and encouragement.
+Guide the Python programmer to resolve their error in 3–5 supportive sentences. Focus on actionable steps and encouragement,
+while avoiding an authoritative tone.
 
 CONTEXT:
 The programmer's code and error message are below:
@@ -97,14 +97,15 @@ ERROR MESSAGE:
 \`\`\`
 ---
 TASK:
-1. Extract the exception type and line number from ERROR.
+1. Extract the exception type and line number from the ERROR message.
 2. Begin your response with "**<ExceptionType>** at **line <line>**:" on the first line.
 3. Then write 3–5 sentences that:
-    - Begin by confirming the likely intent or goal (e.g. "Did you mean to ...?") – this is the claim, showing you understand what they wanted.
-    - Explain plainly why the error occurred, avoiding jargon and keeping it simple.
-    - Optionally provide a brief example or insight.
-    - End with a hint or question that guides them toward the fix (without giving the exact code). For example, ask if they considered a certain approach, or suggest a function to use, without outright providing the solution code.
-
+    - Begin by confirming the likely intent or goal (e.g. "Did you mean to ...?") – this is the claim, showing you understand what the programmer was trying to do.
+    - Point out the relevant part of the code and the specific situation that caused the error.
+    - Explain why this situation leads to the error, and connect the cause to the error.
+    - Only if useful, mention whether this error is common or if there are exceptions.
+    - Only if relevant, note whether there are situations where the error might occur differently.
+    
 FORMAT:
 You may use markdown for emphasis, but do NOT include lists or code fences.
 
@@ -162,6 +163,7 @@ OUTPUT:
 The error occurred because you tried to access an index that is out of range for the list.
 In Python, list indices start at 0, so the last element is at index \`len(lst) - 1\`.
 Consider changing the value you use to access the actual, existing last element of the list, to avoid this error.
+Indexing errors like this are common, especially when working with lists of varying lengths.
 \`\`\`
 ---
 
