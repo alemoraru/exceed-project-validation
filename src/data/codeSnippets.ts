@@ -212,11 +212,10 @@ TypeError: 'builtin_function_or_method' object is not subscriptable`
 ];
 
 export const ollamaModels = [
-    "deepseek-coder:6.7b",
     "llama3.2:3b",
     "llama3.1:8b",
-    "codellama:7b",
-    "qwen3:8b",
+    "deepseek-coder:6.7b",
+    "qwen2.5-coder:7b",
 ];
 
 export type ErrorMessageType = "pragmatic" | "contingent";
