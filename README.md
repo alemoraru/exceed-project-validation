@@ -11,7 +11,10 @@ exported for further analysis.
 
 - [Node.js](https://nodejs.org/) and [npm](https://www.npmjs.com/) installed
 - [Ollama](https://ollama.com/) installed and running locally
-- Download the desired Ollama models on your machine before using the app (models must be available locally)
+- Download the desired Ollama models on your machine before using the app (models must be available locally). More
+  specifically, the following models are used for validation and need to be downloaded:
+  - [`qwen2.5:7b`](https://ollama.com/library/qwen2.5)
+  - [`granite3.3:8b`](https://ollama.com/library/granite3.3)
 
 ---
 
