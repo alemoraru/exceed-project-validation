@@ -208,6 +208,7 @@ TypeError: 'builtin_function_or_method' object is not subscriptable`
 
 export const ollamaModels = [
     "qwen2.5:7b",
+    "qwen2.5-coder:7b",
     "granite3.3:8b",
     "llama3.1:8b"
 ];

@@ -14,9 +14,14 @@ exported for further analysis.
 - Download the desired Ollama models on your machine before using the app (models must be available locally). More
   specifically, the following models are used for validation and need to be downloaded:
     - [`qwen2.5:7b`](https://ollama.com/library/qwen2.5:7b)
+    - [`qwen2.5-coder:7b`](https://ollama.com/library/qwen2.5-coder:7b)
     - [`granite3.3:8b`](https://ollama.com/library/granite3.3:8b)
     - [`llama3.1:8b`](https://ollama.com/library/llama3.1:8b) (but this should not be used for validation, only for
       comparison purposes)
+
+> **Note**: Technically, any Ollama model can be used, but the ones above are specifically valid options on the
+> frontend. If you want to use a different model, you can change the `ollamaModel` in the `src/data/codeSnippets.ts`
+> file to match the model you have available locally.
 
 ---
 
