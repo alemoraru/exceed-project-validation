@@ -213,6 +213,6 @@ export const ollamaModels = [
     "llama3.1:8b"
 ];
 
-export type ErrorMessageType = "pragmatic" | "contingent";
+export type ErrorMessageStyle = "pragmatic" | "contingent";
 
-export const errorMessageTypes: ErrorMessageType[] = ["pragmatic", "contingent"];
+export const errorMessageStyles: ErrorMessageStyle[] = ["pragmatic", "contingent"];
