@@ -15,7 +15,7 @@ exported for further analysis.
   specifically, the following models are used for validation and need to be downloaded:
     - [`qwen2.5:7b`](https://ollama.com/library/qwen2.5:7b)
     - [`granite3.3:8b`](https://ollama.com/library/granite3.3:8b)
-    - [`llama3.1:8b`](https://ollama.com/library/llama3.1:8b) (but this should not be used for validation, only for)
+    - [`llama3.1:8b`](https://ollama.com/library/llama3.1:8b) (but this should not be used for validation, only for
       comparison purposes)
 
 ---
