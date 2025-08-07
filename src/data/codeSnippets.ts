@@ -59,25 +59,20 @@ SyntaxError: unterminated triple-quoted string literal (detected at line 40)`
         name: "name_error.py",
         code: `import random
 
+
 class UserData:
     """Represents user data with a name and a list of scores."""
 
     def __init__(self, name, scores):
         self.name = name
         self.scores = scores
-        self._normalize_scores()
-
-    def _normalize_scores(self):
-        total = sum(self.scores)
-        self.scores = [round(s / total, 2) if total else 0 for s in self.scores]
 
     def top_score(self):
-        """Returns the highest normalized score."""
+        """Returns the highest score."""
         return maximum(self.scores)
 
     def add_score(self, score):
         self.scores.append(score)
-        self._normalize_scores()
 
 
 def summarize_scores(users):
@@ -91,13 +86,13 @@ if __name__ == '__main__':
     for name, score in summary.items():
         print(f"{name}: {score:.2f}")`,
         standardError: `Traceback (most recent call last):
-  File "main.py", line 31, in <module>
+  File "main.py", line 26, in <module>
     summary = summarize_scores(users)
               ^^^^^^^^^^^^^^^^^^^^^^^
-  File "main.py", line 25, in summarize_scores
+  File "main.py", line 20, in summarize_scores
     return {u.name: u.top_score() for u in users}
                     ^^^^^^^^^^^^^
-  File "main.py", line 17, in top_score
+  File "main.py", line 13, in top_score
     return maximum(self.scores)
            ^^^^^^^
 NameError: name 'maximum' is not defined`
@@ -212,10 +207,9 @@ TypeError: 'builtin_function_or_method' object is not subscriptable`
 ];
 
 export const ollamaModels = [
-    "llama3.2:3b",
-    "llama3.1:8b",
-    "deepseek-coder:6.7b",
-    "qwen2.5-coder:7b",
+    "qwen2.5:7b",
+    "granite3.3:8b",
+    "llama3.1:8b"
 ];
 
 export type ErrorMessageType = "pragmatic" | "contingent";
