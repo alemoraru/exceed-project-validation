@@ -396,6 +396,7 @@ export function CodeEditor() {
                                         key={model}
                                         onClick={() => {
                                             setSelectedModel(model);
+                                            setActiveErrorTab('standard'); // Reset to standard tab on model change
                                             setShowErrorPanel(false); // Close error panel when model changes
                                         }}
                                     >
