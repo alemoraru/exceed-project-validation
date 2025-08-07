@@ -21,7 +21,7 @@ import {
     Loader2, Download
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import {codeSnippets, ollamaModels, errorMessageTypes, type ErrorMessageType} from '@/data/codeSnippets';
+import {codeSnippets, ollamaModels, errorMessageStyles, type ErrorMessageStyle} from '@/data/codeSnippets';
 import {FeedbackForm} from './FeedbackForm';
 import ollama from 'ollama';
 import {promptTemplates, systemPrompts} from '@/lib/promptTemplates';
@@ -30,14 +30,14 @@ import {toast} from '@/hooks/use-toast';
 interface ImprovedError {
     snippetId: string;
     content: string;
-    type: ErrorMessageType;
+    type: ErrorMessageStyle;
     model: string;
 }
 
 export function CodeEditor() {
     const [activeTab, setActiveTab] = useState(codeSnippets[0].id);
     const [showErrorPanel, setShowErrorPanel] = useState(false);
-    const [errorMessageType, setErrorMessageType] = useState<ErrorMessageType>('pragmatic');
+    const [errorMessageStyle, setErrorMessageStyle] = useState<ErrorMessageStyle>('pragmatic');
     const [selectedModel, setSelectedModel] = useState(ollamaModels[0]);
     const [improvedErrors, setImprovedErrors] = useState<ImprovedError[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -47,12 +47,12 @@ export function CodeEditor() {
 
     const activeSnippet = codeSnippets.find(s => s.id === activeTab)!;
     const currentImprovedError = improvedErrors.find(
-        e => e.snippetId === activeTab && e.type === errorMessageType && e.model === selectedModel
+        e => e.snippetId === activeTab && e.type === errorMessageStyle && e.model === selectedModel
     );
 
-    const canGenerateError = !isGenerating && (!currentImprovedError || feedbackGiven.has(getErrorKey(activeTab, errorMessageType, selectedModel)));
+    const canGenerateError = !isGenerating && (!currentImprovedError || feedbackGiven.has(getErrorKey(activeTab, errorMessageStyle, selectedModel)));
 
-    function getErrorKey(snippetId: string, type: ErrorMessageType, model: string) {
+    function getErrorKey(snippetId: string, type: ErrorMessageStyle, model: string) {
         return `${snippetId}-${type}-${model}`;
     }
 
@@ -62,7 +62,7 @@ export function CodeEditor() {
         setIsGenerating(true);
         try {
             // Format the prompt using the template
-            const promptTemplate = promptTemplates[errorMessageType];
+            const promptTemplate = promptTemplates[errorMessageStyle];
             const formattedPrompt = promptTemplate
                 .replace('{{code}}', activeSnippet.code)
                 .replace('{{error}}', activeSnippet.standardError);
@@ -83,11 +83,11 @@ export function CodeEditor() {
             const improvedError: ImprovedError = {
                 snippetId: activeTab,
                 content: response.response,
-                type: errorMessageType,
+                type: errorMessageStyle,
                 model: selectedModel,
             };
 
-            setImprovedErrors(prev => [...prev.filter(e => getErrorKey(e.snippetId, e.type, e.model) !== getErrorKey(activeTab, errorMessageType, selectedModel)), improvedError]);
+            setImprovedErrors(prev => [...prev.filter(e => getErrorKey(e.snippetId, e.type, e.model) !== getErrorKey(activeTab, errorMessageStyle, selectedModel)), improvedError]);
             setShowErrorPanel(true); // Open the error panel
             setActiveErrorTab('improved'); // Switch to improved error tab
         } catch (err) {
@@ -95,7 +95,7 @@ export function CodeEditor() {
         } finally {
             setIsGenerating(false);
         }
-    }, [activeTab, errorMessageType, selectedModel, canGenerateError, activeSnippet]);
+    }, [activeTab, errorMessageStyle, selectedModel, canGenerateError, activeSnippet]);
 
     // Utility to store feedback in localStorage
     function storeFeedbackLocally(feedback: Record<string, string>) {
@@ -129,7 +129,7 @@ export function CodeEditor() {
 
     // Handle feedback submission
     const handleFeedbackSubmit = useCallback((answers: Record<string, boolean>) => {
-        const errorKey = getErrorKey(activeTab, errorMessageType, selectedModel);
+        const errorKey = getErrorKey(activeTab, errorMessageStyle, selectedModel);
         setFeedbackGiven(prev => new Set([...prev, errorKey]));
         setShowFeedbackTab(false);
 
@@ -137,7 +137,7 @@ export function CodeEditor() {
         const feedback: Record<string, string> = {
             snippetId: activeTab,
             snippetName: activeSnippet.name,
-            errorType: errorMessageType,
+            errorMessageStyle: errorMessageStyle,
             model: selectedModel,
             timestamp: new Date().toISOString(),
             ...answers // Each answer key becomes a column
@@ -158,14 +158,14 @@ export function CodeEditor() {
         }
         // We just log the feedback here, no need for an API call in this example
         console.log('Feedback submitted:', feedback);
-    }, [activeTab, errorMessageType, selectedModel]);
+    }, [activeTab, errorMessageStyle, selectedModel]);
 
     // Handle tab change and manage error panel visibility
     function handleTabChange(snippetId: string) {
         setActiveTab(snippetId);
         // Only close the error panel if we were viewing the improved error tab and the new snippet does not have an improved error
-        const prevHasImprovedError = improvedErrors.some(e => e.snippetId === activeTab && e.type === errorMessageType && e.model === selectedModel);
-        const newHasImprovedError = improvedErrors.some(e => e.snippetId === snippetId && e.type === errorMessageType && e.model === selectedModel);
+        const prevHasImprovedError = improvedErrors.some(e => e.snippetId === activeTab && e.type === errorMessageStyle && e.model === selectedModel);
+        const newHasImprovedError = improvedErrors.some(e => e.snippetId === snippetId && e.type === errorMessageStyle && e.model === selectedModel);
         const isOnImprovedTab = activeErrorTab === 'improved';
         if (isOnImprovedTab && prevHasImprovedError && !newHasImprovedError) {
             setShowErrorPanel(false);
@@ -173,8 +173,8 @@ export function CodeEditor() {
         }
     }
 
-    const handleErrorMessageTypeChange = (type: ErrorMessageType) => {
-        setErrorMessageType(type);
+    const handleErrorMessageStyleChange = (type: ErrorMessageStyle) => {
+        setErrorMessageStyle(type);
         // Check if the new error type has an improved error for the current tab and model
         const hasImprovedError = improvedErrors.some(e => e.snippetId === activeTab && e.type === type && e.model === selectedModel);
         if (!hasImprovedError) {
@@ -340,7 +340,7 @@ export function CodeEditor() {
                         <ResizablePanel defaultSize={40} minSize={30} className="min-h-0 max-h-full overflow-hidden">
                             <FeedbackForm
                                 snippetName={activeSnippet.name}
-                                errorType={errorMessageType}
+                                errorType={errorMessageStyle}
                                 model={selectedModel}
                                 onSubmit={handleFeedbackSubmit}
                                 onCancel={() => setShowFeedbackTab(false)}
@@ -366,16 +366,15 @@ export function CodeEditor() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="flex items-center gap-2">
-                                    Type: {errorMessageType}
+                                    Style: {errorMessageStyle}
                                     <ChevronDown className="w-4 h-4"/>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="bg-popover">
-                                {errorMessageTypes.map((type) => (
+                                {errorMessageStyles.map((type) => (
                                     <DropdownMenuItem
                                         key={type}
-                                        onClick={() => handleErrorMessageTypeChange(type)}
-                                        className="capitalize"
+                                        onClick={() => handleErrorMessageStyleChange(type)}
                                     >
                                         {type}
                                     </DropdownMenuItem>
@@ -428,7 +427,7 @@ export function CodeEditor() {
                                 setShowFeedbackTab(true);
                                 setShowErrorPanel(true); // Ensure error panel is visible for comparison
                             }}
-                            disabled={!currentImprovedError || feedbackGiven.has(getErrorKey(activeTab, errorMessageType, selectedModel))}
+                            disabled={!currentImprovedError || feedbackGiven.has(getErrorKey(activeTab, errorMessageStyle, selectedModel))}
                             className="flex items-center gap-2"
                         >
                             <MessageSquare className="w-4 h-4"/>

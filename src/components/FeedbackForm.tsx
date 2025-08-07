@@ -4,11 +4,11 @@ import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {RadioGroup, RadioGroupItem} from '@/components/ui/radio-group';
 import {Label} from '@/components/ui/label';
 import {CheckCircle, XCircle} from 'lucide-react';
-import type {ErrorMessageType} from '@/data/codeSnippets';
+import type {ErrorMessageStyle} from '@/data/codeSnippets';
 
 interface FeedbackFormProps {
     snippetName: string;
-    errorType: ErrorMessageType;
+    errorType: ErrorMessageStyle;
     model: string;
     onSubmit: (answers: Record<string, boolean>) => void;
     onCancel: () => void;
