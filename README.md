@@ -16,8 +16,7 @@ exported for further analysis.
     - [`qwen2.5:7b`](https://ollama.com/library/qwen2.5:7b)
     - [`qwen2.5-coder:7b`](https://ollama.com/library/qwen2.5-coder:7b)
     - [`granite3.3:8b`](https://ollama.com/library/granite3.3:8b)
-    - [`llama3.1:8b`](https://ollama.com/library/llama3.1:8b) (but this should not be used for validation, only for
-      comparison purposes)
+    - [`llama3.1:8b`](https://ollama.com/library/llama3.1:8b)
 
 > **Note**: Technically, any Ollama model can be used, but the ones above are specifically valid options on the
 > frontend. If you want to use a different model, you can change the `ollamaModel` in the `src/data/codeSnippets.ts`
