@@ -165,8 +165,7 @@ def dot(a, b):
     return sum(x * y for x, y in zip(a, b))
 
 def cosine(a, b):
-    if len(a) != len(b):
-        raise ValueError("Vectors must be of the same length")
+    if len(a) != len(b): raise ValueError("Vectors must be of the same length")
     return dot(normalize(a), normalize(b))
 
 def fixed_vectors():
@@ -199,9 +198,9 @@ def main():
 if __name__ == "__main__":
     main()`,
         standardError: `Traceback (most recent call last):
-  File "main.py", line 43, in <module>
+  File "main.py", line 42, in <module>
     main()
-  File "main.py", line 40, in main
+  File "main.py", line 39, in main
     print("Vector", i, ":", vs.__getitem__[i])
                             ~~~~~~~~~~~~~~^^^
 TypeError: 'builtin_function_or_method' object is not subscriptable`
