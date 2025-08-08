@@ -17,7 +17,7 @@ ERROR MESSAGE:
 {{error}}
 \`\`\`
 ---
-
+TASK:
 1. Identify the cause of the error and the relevant line number from the code snippet. DO NOT FETCH THE LINE NUMBER FROM THE ERROR MESSAGE.
 2. Write exactly one paragraph (around 20-25 words or less) that:
     - Begins with "**<ExceptionType>** at **line <line>**:"
