@@ -56,6 +56,10 @@ export function CodeEditor() {
         return `${snippetId}-${type}-${model}`;
     }
 
+    function formatCodeWithLineNumbers(code: string): string {
+        return code.split('\n').map((line, idx) => `${idx + 1} ${line}`).join('\n');
+    }
+
     const generateImprovedError = useCallback(async () => {
         if (!canGenerateError) return;
 
@@ -63,11 +67,16 @@ export function CodeEditor() {
         try {
             // Format the prompt using the template
             const promptTemplate = promptTemplates[errorMessageStyle];
+            // Prepend line numbers to code
+            const numberedCode = formatCodeWithLineNumbers(activeSnippet.code);
             const formattedPrompt = promptTemplate
-                .replace('{{code}}', activeSnippet.code)
+                .replace('{{code}}', numberedCode)
                 .replace('{{error}}', activeSnippet.standardError);
 
             const systemPrompt = systemPrompts[selectedModel];
+
+            // Print the formatted prompt to console
+            console.log('Formatter prompt:', formattedPrompt);
 
             // Call Ollama API using the selected model
             const response = await ollama.generate({
