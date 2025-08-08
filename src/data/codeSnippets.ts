@@ -69,7 +69,7 @@ class UserData:
 
     def top_score(self):
         """Returns the highest score."""
-        return maximum(self.scores)
+        return maximum(self.scores) if self.scores else 0
 
     def add_score(self, score):
         self.scores.append(score)
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     return {u.name: u.top_score() for u in users}
                     ^^^^^^^^^^^^^
   File "main.py", line 13, in top_score
-    return maximum(self.scores)
+    return maximum(self.scores) if self.scores else 0
            ^^^^^^^
 NameError: name 'maximum' is not defined`
     },
@@ -165,6 +165,7 @@ def dot(a, b):
     return sum(x * y for x, y in zip(a, b))
 
 def cosine(a, b):
+    if len(a) != len(b): raise ValueError("Vectors must be of the same length")
     return dot(normalize(a), normalize(b))
 
 def fixed_vectors():
@@ -197,9 +198,9 @@ def main():
 if __name__ == "__main__":
     main()`,
         standardError: `Traceback (most recent call last):
-  File "main.py", line 41, in <module>
+  File "main.py", line 42, in <module>
     main()
-  File "main.py", line 38, in main
+  File "main.py", line 39, in main
     print("Vector", i, ":", vs.__getitem__[i])
                             ~~~~~~~~~~~~~~^^^
 TypeError: 'builtin_function_or_method' object is not subscriptable`
