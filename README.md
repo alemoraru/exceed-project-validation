@@ -5,6 +5,8 @@ messages for buggy code snippets. The web application allows users to select dif
 generate improved error messages, and provide feedback on their quality. All feedback is stored locally and can be
 exported for further analysis.
 
+![img.png](public/app-screenshot.png)
+
 ---
 
 ## 🛠️ Requirements
